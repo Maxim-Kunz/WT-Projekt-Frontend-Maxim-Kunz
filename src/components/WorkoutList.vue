@@ -1,20 +1,41 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
-const workouts = ref([
-  { id: 1, name: 'Bankdrücken', sets: 3 },
-  { id: 2, name: 'Kniebeugen', sets: 4 },
-  { id: 3, name: 'Kreuzheben', sets: 3 }
-])
+const workouts = ref([])
+
+const loadWorkouts = () => {
+  const baseUrl = import.meta.env.VITE_BACKEND_URL
+  const endpoint = `${baseUrl}/workouts`
+
+  const requestOptions = {
+    method: 'GET',
+    redirect: 'follow'
+  }
+
+  fetch(endpoint, requestOptions)
+      .then(response => {
+        if (!response.ok) throw new Error('Netzwerk-Fehler beim Fetch')
+        return response.json()
+      })
+      .then(result => {
+        workouts.value = result
+      })
+      .catch(error => console.error('Fehler:', error))
+}
+
+onMounted(() => {
+  loadWorkouts()
+})
 </script>
 
 <template>
   <div class="workout-list">
-    <h2>Meine Workouts</h2>
-    <ul>
-      <li v-for="workout in workouts" :key="workout.id">
-        {{ workout.name }} ({{ workout.sets }} Sätze)
+    <h2>Meine Workouts aus der Cloud</h2>
+    <ul v-if="workouts.length > 0">
+      <li v-for="workout in workouts" :key="workout.exerciseName">
+        {{ workout.exerciseName }} ({{ workout.sets }} Sätze)
       </li>
     </ul>
+    <p v-else>Lade Workouts vom Server...</p>
   </div>
 </template>
