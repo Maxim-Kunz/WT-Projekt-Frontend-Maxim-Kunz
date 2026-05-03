@@ -24,6 +24,7 @@ const isDarkMode = ref(false)
 const isLoading = ref(false)
 const newDate = ref(new Date().toISOString().split('T')[0])
 const showInfoModal = ref(true)
+const lastUpdate = ref('')
 
 const baseUrl = import.meta.env.VITE_BACKEND_URL
 const endpoint = `${baseUrl}/workouts`
@@ -261,8 +262,22 @@ onUnmounted(() => {
   if (tipInterval) clearInterval(tipInterval)
 })
 
+const fetchGitHubStats = async () => {
+  try {
+    // Ruft die Daten des letzten Commits deines Repositories ab
+    const response = await fetch('https://api.github.com/repos/Maxim-Kunz/WT-Projekt-Maxim-Kunz/commits/main')
+    if (response.ok) {
+      const data = await response.json()
+      const date = new Date(data.commit.author.date)
+      lastUpdate.value = `${date.toLocaleDateString('de-DE')} um ${date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`
+    }
+  } catch (error) {
+    console.error("Konnte GitHub API nicht abrufen", error)
+  }
+}
 onMounted(() => {
   loadWorkouts()
+  fetchGitHubStats()
 
   // Initiale Tipps setzen
   const [initialLeft, initialRight] = getRandomTips()
@@ -381,6 +396,10 @@ onMounted(() => {
       </div>
     </Transition>
   </div>
+  <!-- Footer mit API-Daten -->
+  <footer v-if="lastUpdate" class="app-footer">
+    <p>🚀 Letztes App-Update (via GitHub API): {{ lastUpdate }}</p>
+  </footer>
 </template>
 
 <style scoped>
@@ -761,5 +780,15 @@ button:active {
   .floating-tip {
     display: none;
   }
+}
+/* --- Footer --- */
+.app-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.85rem;
+  color: #7f8c8d;
+}
+.dark-mode .app-footer {
+  color: #777;
 }
 </style>
