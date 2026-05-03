@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import {
   Chart as ChartJS,
   Title,
@@ -207,8 +207,76 @@ const chartOptions = {
     }
   }
 }
+// --- Fitness Tipps (Floating) ---
+const fitnessTips = [
+  "Trinke genug Wasser! Mindestens 2-3 Liter pro Tag, besonders an Trainingstagen.",
+  "Vergiss das Aufwärmen nicht. 5-10 Minuten leichtes Cardio bereiten die Muskeln vor.",
+  "Ausführung vor Gewicht: Achte immer auf eine saubere Technik, um Verletzungen zu vermeiden.",
+  "Schlaf ist entscheidend: Deine Muskeln wachsen in der Ruhephase, nicht im Training.",
+  "Protein ist der Baustein deiner Muskeln. Achte auf eine ausreichende Zufuhr.",
+  "Konsistenz ist der Schlüssel. Bleib dran, auch wenn die Motivation mal fehlt!",
+  "Gönn dir Rest Days! Dein zentrales Nervensystem braucht Zeit zur Erholung.",
+  "Tracke deine Fortschritte: Nur wer seine Werte kennt, kann sich gezielt steigern!",
+  "Richtige Atmung: Beim Herablassen des Gewichts einatmen, bei der Anstrengung ausatmen.",
+  "Progressive Overload: Versuche, dich regelmäßig beim Gewicht oder den Wiederholungen zu steigern.",
+  "Wärme dich spezifisch auf: Ein leichter Aufwärmsatz der jeweiligen Übung ist oft besser als nur Laufband.",
+  "Höre auf deinen Körper: Echter Schmerz ist kein gutes Zeichen, Muskelkater hingegen völlig normal.",
+  "Dehnen nicht vergessen! Nach dem Training hilft Stretching, die Beweglichkeit zu erhalten.",
+  "Kohlenhydrate nach dem Workout füllen deine Glykogenspeicher wieder auf und helfen bei der Regeneration.",
+  "Der Core ist entscheidend: Spanne bei fast allen freien Übungen den Bauch an, um den Rücken zu schützen.",
+  "Qualität vor Quantität: 10 saubere Wiederholungen bringen viel mehr als 15 unsaubere.",
+  "Vergleiche dich nur mit dir selbst von gestern, nicht mit anderen Leuten im Gym.",
+  "Gute Musik oder ein Podcast können deine Leistung und Motivation im Training nachweislich steigern.",
+  "Mikronährstoffe nicht vergessen! Vitamine und Mineralien aus Gemüse halten deinen Motor am Laufen.",
+  "Ein kurzes Cool-down bringt deinen Puls nach einem harten Training wieder sicher auf Normalniveau."
+]
 
-onMounted(loadWorkouts)
+const leftTip = ref('')
+const rightTip = ref('')
+const showTips = ref(false)
+let tipInterval = null
+
+// Hilfsfunktion: Zieht zwei zufällige, unterschiedliche Tipps aus dem Array
+const getRandomTips = () => {
+  // Das Array mischen und die ersten beiden Elemente nehmen
+  const shuffled = [...fitnessTips].sort(() => 0.5 - Math.random())
+  return [shuffled[0], shuffled[1]]
+}
+
+const rotateTips = () => {
+  showTips.value = false // Beide Tipps ausblenden
+
+  setTimeout(() => {
+    // Zwei neue Tipps holen und zuweisen
+    const [newLeft, newRight] = getRandomTips()
+    leftTip.value = newLeft
+    rightTip.value = newRight
+
+    showTips.value = true // Beide Tipps wieder einblenden
+  }, 500) // Kurz warten, bis die Ausblend-Animation fertig ist
+}
+
+// Timer aufräumen
+onUnmounted(() => {
+  if (tipInterval) clearInterval(tipInterval)
+})
+
+onMounted(() => {
+  loadWorkouts()
+
+  // Initiale Tipps setzen
+  const [initialLeft, initialRight] = getRandomTips()
+  leftTip.value = initialLeft
+  rightTip.value = initialRight
+
+  // Zeige die Tipps nach 5 Sekunden
+  setTimeout(() => {
+    showTips.value = true
+  }, 5000)
+
+  // Rotiere die Tipps danach alle 30 Sekunden
+  tipInterval = setInterval(rotateTips, 30000)
+})
 </script>
 
 <template>
@@ -298,6 +366,20 @@ onMounted(loadWorkouts)
         <button @click="closeInfoModal" class="close-btn">Alles klar!</button>
       </div>
     </div>
+    <!-- Fitness Tipps (Floating links und rechts gleichzeitig) -->
+    <Transition name="fade-slide">
+      <div v-if="showTips" class="floating-tip tip-left">
+        <h4>💡 Wusstest du schon?</h4>
+        <p>{{ leftTip }}</p>
+      </div>
+    </Transition>
+
+    <Transition name="fade-slide">
+      <div v-if="showTips" class="floating-tip tip-right">
+        <h4>💪 Fitness-Fakt</h4>
+        <p>{{ rightTip }}</p>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -611,5 +693,73 @@ button:active {
 .dark-mode .stat-value {
   color: #e0e0e0;
 }
+/* --- Floating Fitness Tipps --- */
+.floating-tip {
+  position: fixed;
+  top: 50%;
+  width: 250px;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  border-left: 5px solid #4CAF50;
+  z-index: 100;
+}
 
+.floating-tip h4 {
+  margin: 0 0 10px 0;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.floating-tip p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+.tip-left {
+  left: 5%;
+}
+
+.tip-right {
+  right: 5%;
+}
+
+/* Dark Mode für Tipps */
+.dark-mode .floating-tip {
+  background-color: #1e1e1e;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  border-left-color: #4CAF50;
+}
+.dark-mode .floating-tip h4 { color: #e0e0e0; }
+.dark-mode .floating-tip p { color: #aaa; }
+
+/* Vue Transition Animationen */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.5s ease;
+}
+
+/* Wie das Element startet (und wohin es verschwindet) */
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+/* Normale Position (Mitte) */
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Responsive Design: Tipps auf kleinen Bildschirmen (Laptops/Tablets) ausblenden, damit nichts überlappt */
+@media (max-width: 1200px) {
+  .floating-tip {
+    display: none;
+  }
+}
 </style>
