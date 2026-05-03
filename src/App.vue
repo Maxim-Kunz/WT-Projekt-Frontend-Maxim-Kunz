@@ -4,7 +4,7 @@ import WorkoutList from './components/WorkoutList.vue'
 
 <template>
   <main>
-    <h1>Workout Tracker</h1>
+    <h1>💪 Workout Tracker</h1>
     <WorkoutList />
   </main>
 </template>
