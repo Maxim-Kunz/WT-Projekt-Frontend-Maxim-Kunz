@@ -343,7 +343,11 @@ onMounted(() => {
         </select>
       </div>
 
-      <!-- NEU: Statistik-Bereich -->
+      <div v-if="workouts.length > 0" class="chart-container">
+        <h3>📈 Trainingsverlauf</h3>
+        <Line :data="chartData" :options="chartOptions" />
+      </div>
+
       <div v-if="workouts.length > 0" class="stats-container">
         <h3>🏆 Deine Meilensteine</h3>
         <div class="stats-grid">
@@ -369,10 +373,10 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Ladesymbol -->
       <div v-if="isLoading" class="loading-spinner">
         🏋️‍♂️ Ich trainiere etwas, solange es lädt...
       </div>
+
       <ul v-else-if="filteredWorkouts.length > 0" class="workout-list">
         <li v-for="workout in filteredWorkouts" :key="workout.id" class="workout-item">
           <div class="workout-info">
@@ -384,18 +388,10 @@ onMounted(() => {
         </li>
       </ul>
 
-      <!-- Workout Liste -->
-      <ul v-else-if="workouts.length > 0" class="workout-list">
-        <li v-for="workout in workouts" :key="workout.id" class="workout-item">
-          <div class="workout-info">
-            <span class="workout-name">{{ workout.name }}</span>
-            <span class="workout-sets">{{ workout.sets }} Sätze</span>
-            <!-- Anzeige des Datums -->
-            <span class="workout-date" v-if="workout.date">({{ formatDate(workout.date) }})</span>
-          </div>
-          <button @click="deleteWorkout(workout.id)" class="delete-btn">Löschen</button>
-        </li>
-      </ul>
+      <p v-else-if="workouts.length > 0 && filteredWorkouts.length === 0" class="empty-state">
+        Keine Einträge für diese Übung gefunden.
+      </p>
+
       <p v-else class="empty-state">Noch keine Workouts in der Datenbank vorhanden. Leg los! 💪</p>
     </div>
     <!-- Info Modal (Overlay) -->
