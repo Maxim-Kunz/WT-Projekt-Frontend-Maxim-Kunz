@@ -25,6 +25,7 @@ const isLoading = ref(false)
 const newDate = ref(new Date().toISOString().split('T')[0])
 const showInfoModal = ref(true)
 const lastUpdate = ref('')
+const selectedFilter = ref('')
 
 const baseUrl = import.meta.env.VITE_BACKEND_URL
 const endpoint = `${baseUrl}/workouts`
@@ -235,6 +236,7 @@ const fitnessTips = [
 const leftTip = ref('')
 const rightTip = ref('')
 const showTips = ref(false)
+const searchQuery = ref('')
 let tipInterval = null
 
 // Hilfsfunktion: Zieht zwei zufällige, unterschiedliche Tipps aus dem Array
@@ -261,6 +263,17 @@ const rotateTips = () => {
 onUnmounted(() => {
   if (tipInterval) clearInterval(tipInterval)
 })
+
+
+const filteredWorkouts = computed(() => {
+  if (!selectedFilter.value) {
+    return workouts.value // Wenn nichts ausgewählt ist (Wert ist leer), zeige alle
+  }
+  // Filtere exakt nach dem ausgewählten Namen
+  return workouts.value.filter(workout => workout.name === selectedFilter.value)
+})
+
+
 
 const fetchGitHubStats = async () => {
   try {
@@ -320,11 +333,14 @@ onMounted(() => {
       <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
 
       <hr />
-      <!-- Chart-Bereich -->
-      <div v-if="workouts.length > 0" class="chart-container">
-        <h3>📈 Trainingsverlauf</h3>
-        <!-- Line Chart aus vue-chartjs -->
-        <Line :data="chartData" :options="chartOptions" />
+
+      <div class="search-bar" v-if="uniqueExercises.length > 0">
+        <select v-model="selectedFilter" class="filter-select">
+          <option value="">🌍 Alle Übungen anzeigen</option>
+          <option v-for="name in uniqueExercises" :key="name" :value="name">
+            {{ name }}
+          </option>
+        </select>
       </div>
 
       <!-- NEU: Statistik-Bereich -->
@@ -357,6 +373,16 @@ onMounted(() => {
       <div v-if="isLoading" class="loading-spinner">
         🏋️‍♂️ Ich trainiere etwas, solange es lädt...
       </div>
+      <ul v-else-if="filteredWorkouts.length > 0" class="workout-list">
+        <li v-for="workout in filteredWorkouts" :key="workout.id" class="workout-item">
+          <div class="workout-info">
+            <span class="workout-name">{{ workout.name }}</span>
+            <span class="workout-sets">{{ workout.sets }} Sätze</span>
+            <span class="workout-date" v-if="workout.date">({{ formatDate(workout.date) }})</span>
+          </div>
+          <button @click="deleteWorkout(workout.id)" class="delete-btn">Löschen</button>
+        </li>
+      </ul>
 
       <!-- Workout Liste -->
       <ul v-else-if="workouts.length > 0" class="workout-list">
@@ -790,5 +816,26 @@ button:active {
 }
 .dark-mode .app-footer {
   color: #777;
+}
+
+/* --- Filter Select --- */
+.search-bar {
+  margin-bottom: 20px;
+  text-align: center;
+}
+.filter-select {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+  background-color: white;
+  cursor: pointer;
+}
+.dark-mode .filter-select {
+  background-color: #2c2c2c;
+  color: white;
+  border-color: #444;
 }
 </style>
